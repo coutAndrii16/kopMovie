@@ -1,16 +1,20 @@
 import type { Movie, PaginatedResponse, GenreListResponse } from '../types/tmdb'
 
 const BASE_URL = 'https://api.themoviedb.org/3'
-const API_KEY = import.meta.env.VITE_TMDB_API_KEY as string
+const READ_TOKEN = import.meta.env.VITE_TMDB_READ_TOKEN as string
 
-if (!API_KEY) {
-    //у проді просто впаде запит із 401.
-    console.warn('VITE_TMDB_API_KEY не задано.')
+if (!READ_TOKEN) {
+    console.warn('VITE_TMDB_READ_TOKEN не задано.')
 }
 
 async function request<T>(path: string): Promise<T> {
-    const url = `${BASE_URL}${path}${path.includes('?') ? '&' : '?'}api_key=${API_KEY}&language=uk-UA`
-    const res = await fetch(url)
+    const url = `${BASE_URL}${path}${path.includes('?') ? '&' : '?'}language=uk-UA`
+    const res = await fetch(url, {
+        headers: {
+            Authorization: `Bearer ${READ_TOKEN}`,
+            accept: 'application/json',
+        },
+    })
     if (!res.ok) {
         throw new Error(`TMDB API ${res.status}: ${res.statusText} (${path})`)
     }
