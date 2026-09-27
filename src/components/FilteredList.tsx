@@ -21,13 +21,13 @@ export default function FilteredList({ movies, genres, ratingAsPercent }: Filter
         ratingAsPercent ? `${Math.round(value * 10)}%` : value.toFixed(1)
 
     return (
-        <div className="widget-card widget-card--wide">
-            <div className="filtered-list__header">
-                <span className="widget-card__label">Фільми в прокаті</span>
+        <div>
+            <div className="flex items-center justify-between">
+                <span className="text-sm text-muted">Фільми в прокаті</span>
                 <select
-                    className="filtered-list__select"
                     value={selectedGenre}
                     onChange={(e) => setSelectedGenre(e.target.value)}
+                    className="rounded-md border border-border bg-surface2 px-2.5 py-1.5 text-sm text-ink"
                 >
                     <option value="all">Усі жанри</option>
                     {genres.map((genre) => (
@@ -38,20 +38,32 @@ export default function FilteredList({ movies, genres, ratingAsPercent }: Filter
                 </select>
             </div>
 
-            <ul className="filtered-list__items">
+            <ul className="mt-3">
                 {filtered.map((movie) => (
-                    <li key={movie.id} className="filtered-list__item">
-                        <div className="filtered-list__item-main">
-                            <span className="filtered-list__title">{movie.title}</span>
-                            <span className="filtered-list__genres">
-                {movie.genre_ids.map(genreName).join(' · ')}
-              </span>
+                    <li
+                        key={movie.id}
+                        className="flex items-center justify-between gap-4 border-t border-border py-3 first:border-t-0 hover:bg-surface2/60 -mx-2 px-2 rounded-md transition-colors"
+                    >
+                        <div className="min-w-0">
+                            <div className="truncate font-medium">{movie.title}</div>
+                            <div className="mt-1 flex flex-wrap gap-1.5">
+                                {movie.genre_ids.map((id) => (
+                                    <span
+                                        key={id}
+                                        className="rounded-full border border-border px-2 py-0.5 text-xs text-muted"
+                                    >
+                    {genreName(id)}
+                  </span>
+                                ))}
+                            </div>
                         </div>
-                        <span className="filtered-list__rating">{formatRating(movie.vote_average)}</span>
+                        <span className="shrink-0 rounded-full bg-gold/10 px-2.5 py-1 text-sm font-semibold text-gold">
+              ★ {formatRating(movie.vote_average)}
+            </span>
                     </li>
                 ))}
                 {filtered.length === 0 && (
-                    <li className="filtered-list__empty">У цьому жанрі поки немає фільмів.</li>
+                    <li className="py-6 text-sm text-muted">У цьому жанрі поки немає фільмів.</li>
                 )}
             </ul>
         </div>
