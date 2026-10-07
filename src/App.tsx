@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react'
 import KpiCard from './components/KpiCard'
 import Counter from './components/Counter'
 import Toggle from './components/Toggle'
-import FilteredList from './components/FilteredList'
+import MovieCatalog from './components/MovieCatalog'
 import { fetchNowPlaying, fetchGenres } from './api/tmdb'
-import type { Movie, Genre } from './types/tmdb'
+import type { Movie, Genre, PaginatedResponse } from './types/tmdb.ts'
 
 export default function App() {
-    const [movies, setMovies] = useState<Movie[]>([])
+    const [nowPlaying, setNowPlaying] = useState<PaginatedResponse<Movie> | null>(null)
     const [genres, setGenres] = useState<Genre[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -17,9 +17,9 @@ export default function App() {
         let cancelled = false
 
         Promise.all([fetchNowPlaying(), fetchGenres()])
-            .then(([nowPlaying, genreList]) => {
+            .then(([np, genreList]) => {
                 if (cancelled) return
-                setMovies(nowPlaying.results)
+                setNowPlaying(np)
                 setGenres(genreList.genres)
             })
             .catch((err: Error) => {
@@ -42,18 +42,20 @@ export default function App() {
         )
     }
 
-    if (error) {
+    if (error || !nowPlaying) {
         return (
             <div className="flex min-h-screen flex-col items-center justify-center gap-2 text-center">
                 <p className="text-ink">Помилка запиту до TMDB: {error}</p>
-                <p className="text-sm text-muted">Перевірте VITE_TMDB_API_KEY у .env</p>
+                <p className="text-sm text-muted">Перевірте VITE_TMDB_READ_TOKEN у .env</p>
             </div>
         )
     }
 
-    const topRated = [...movies].sort((a, b) => b.vote_average - a.vote_average)[0]
-    const avgRating = movies.length
-        ? (movies.reduce((sum, m) => sum + m.vote_average, 0) / movies.length).toFixed(1)
+    // KPI рахуються з першої сторінки прокату; total_results — реальна кількість фільмів у прокаті.
+    const sample = nowPlaying.results
+    const topRated = [...sample].sort((a, b) => b.vote_average - a.vote_average)[0]
+    const avgRating = sample.length
+        ? (sample.reduce((sum, m) => sum + m.vote_average, 0) / sample.length).toFixed(1)
         : '—'
 
     return (
@@ -64,16 +66,16 @@ export default function App() {
             </header>
 
             <section className="flex rounded-xl border border-border bg-surface px-2">
-                <KpiCard label="У прокаті" value={movies.length} change="зараз у кінотеатрах" />
+                <KpiCard label="У прокаті" value={nowPlaying.total_results} change="усього фільмів" />
                 {topRated && (
                     <KpiCard label="Топ-рейтинг" value={topRated.title} change={`${topRated.vote_average} / 10`} tone="gold" />
                 )}
-                <KpiCard label="Середня оцінка" value={avgRating} change="за всіма фільмами" />
+                <KpiCard label="Середня оцінка" value={avgRating} change="перша сторінка прокату" />
                 <KpiCard label="Жанрів" value={genres.length} change="у довіднику TMDB" tone="indigo" />
             </section>
 
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-[220px_1fr]">
-                <aside className="space-y-6 rounded-xl border border-border bg-surface p-5">
+                <aside className="space-y-6 self-start rounded-xl border border-border bg-surface p-5">
                     <Counter label="У списку «Переглянути пізніше»" initial={0} step={1} />
                     <Toggle
                         label="Одиниця рейтингу"
@@ -85,7 +87,7 @@ export default function App() {
                 </aside>
 
                 <div className="rounded-xl border border-border bg-surface p-5">
-                    <FilteredList movies={movies} genres={genres} ratingAsPercent={ratingAsPercent} />
+                    <MovieCatalog genres={genres} ratingAsPercent={ratingAsPercent} />
                 </div>
             </div>
         </div>
