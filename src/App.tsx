@@ -68,10 +68,10 @@ export default function App() {
             <section className="flex rounded-xl border border-border bg-surface px-2">
                 <KpiCard label="У прокаті" value={nowPlaying.total_results} change="усього фільмів" />
                 {topRated && (
-                    <KpiCard label="Топ-рейтинг" value={topRated.title} change={`${topRated.vote_average} / 10`} tone="gold" />
+                    <KpiCard label="Топ-рейтинг" value={topRated.title} change={`${topRated.vote_average} / 10`} color="gold" />
                 )}
                 <KpiCard label="Середня оцінка" value={avgRating} change="перша сторінка прокату" />
-                <KpiCard label="Жанрів" value={genres.length} change="у довіднику TMDB" tone="indigo" />
+                <KpiCard label="Жанрів" value={genres.length} change="у довіднику TMDB" color="indigo" />
             </section>
 
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-[220px_1fr]">
