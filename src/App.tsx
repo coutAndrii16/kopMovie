@@ -1,122 +1,95 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react'
+import KpiCard from './components/KpiCard'
+import Counter from './components/Counter'
+import Toggle from './components/Toggle'
+import MovieCatalog from './components/MovieCatalog'
+import { fetchNowPlaying, fetchGenres } from './api/tmdb'
+import type { Movie, Genre, PaginatedResponse } from './types/tmdb.ts'
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+    const [nowPlaying, setNowPlaying] = useState<PaginatedResponse<Movie> | null>(null)
+    const [genres, setGenres] = useState<Genre[]>([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+    const [ratingAsPercent, setRatingAsPercent] = useState(false)
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    useEffect(() => {
+        let cancelled = false
+
+        Promise.all([fetchNowPlaying(), fetchGenres()])
+            .then(([np, genreList]) => {
+                if (cancelled) return
+                setNowPlaying(np)
+                setGenres(genreList.genres)
+            })
+            .catch((err: Error) => {
+                if (!cancelled) setError(err.message)
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false)
+            })
+
+        return () => {
+            cancelled = true
+        }
+    }, [])
+
+    if (loading) {
+        return (
+            <div className="flex min-h-screen items-center justify-center text-muted">
+                Завантаження даних з TMDB…
+            </div>
+        )
+    }
+
+    if (error || !nowPlaying) {
+        return (
+            <div className="flex min-h-screen flex-col items-center justify-center gap-2 text-center">
+                <p className="text-ink">Помилка запиту до TMDB: {error}</p>
+                <p className="text-sm text-muted">Перевірте VITE_TMDB_READ_TOKEN у .env</p>
+            </div>
+        )
+    }
+
+    // KPI рахуються з першої сторінки прокату; total_results — реальна кількість фільмів у прокаті.
+    const sample = nowPlaying.results
+    const topRated = [...sample].sort((a, b) => b.vote_average - a.vote_average)[0]
+    const avgRating = sample.length
+        ? (sample.reduce((sum, m) => sum + m.vote_average, 0) / sample.length).toFixed(1)
+        : '—'
+
+    return (
+        <div className="mx-auto max-w-4xl px-6 py-10">
+            <header className="mb-8">
+                <h1 className="text-2xl font-extrabold">CineBoard</h1>
+                <p className="mt-1 text-sm text-muted">Дашборд кінопрокату на даних TMDB</p>
+            </header>
+
+            <section className="flex rounded-xl border border-border bg-surface px-2">
+                <KpiCard label="У прокаті" value={nowPlaying.total_results} change="усього фільмів" />
+                {topRated && (
+                    <KpiCard label="Топ-рейтинг" value={topRated.title} change={`${topRated.vote_average} / 10`} color="gold" />
+                )}
+                <KpiCard label="Середня оцінка" value={avgRating} change="перша сторінка прокату" />
+                <KpiCard label="Жанрів" value={genres.length} change="у довіднику TMDB" color="indigo" />
+            </section>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-[220px_1fr]">
+                <aside className="space-y-6 self-start rounded-xl border border-border bg-surface p-5">
+                    <Counter label="У списку «Переглянути пізніше»" initial={0} step={1} />
+                    <Toggle
+                        label="Одиниця рейтингу"
+                        isOn={ratingAsPercent}
+                        onToggle={() => setRatingAsPercent((v) => !v)}
+                        labelOff="TMDB (0–10)"
+                        labelOn="Відсоток глядачів"
+                    />
+                </aside>
+
+                <div className="rounded-xl border border-border bg-surface p-5">
+                    <MovieCatalog genres={genres} ratingAsPercent={ratingAsPercent} />
+                </div>
+            </div>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    )
 }
-
-export default App
