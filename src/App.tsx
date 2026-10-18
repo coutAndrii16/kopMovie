@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import KpiCard from './components/KpiCard'
 import Counter from './components/Counter'
 import Toggle from './components/Toggle'
-import MovieCatalog from './components/MovieCatalog'
+import MovieCatalog from './components/MovieCatalog.tsx'
 import { fetchNowPlaying, fetchGenres } from './api/tmdb'
 import type { Movie, Genre, PaginatedResponse } from './types/tmdb.ts'
 

@@ -1,4 +1,4 @@
-import type { Movie } from '../types/tmdb'
+import type { Movie } from '../../types/tmdb.ts'
 
 interface MovieRowProps {
     movie: Movie

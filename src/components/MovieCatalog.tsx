@@ -1,8 +1,10 @@
 import SearchInput from './filters/SearchInput.tsx'
 import GenreFilter from './filters/GenreFilter.tsx'
-import MovieList from './MovieList'
-import Pagination from './Pagination'
+import MovieList from './list/MovieList.tsx'
+import Pagination from './list/Pagination.tsx'
 import { useMovieCatalog } from '../hooks/useMovieCatalog.ts'
+import SortControl from './list/SortControl'
+import { useSortedMovies } from '../hooks/useSortedMovies'
 import type { Genre } from '../types/tmdb.ts'
 
 interface MovieCatalogProps {
@@ -14,7 +16,7 @@ interface MovieCatalogProps {
 export default function MovieCatalog({ genres, ratingAsPercent }: MovieCatalogProps) {
     const c = useMovieCatalog()
     const searching = c.search.trim() !== ''
-
+    const { sorted, field, direction, toggleSort } = useSortedMovies(c.movies)
     return (
         <div>
             <div className="flex items-baseline justify-between">
@@ -29,14 +31,16 @@ export default function MovieCatalog({ genres, ratingAsPercent }: MovieCatalogPr
             {searching && (
                 <p className="mt-2 text-xs text-muted">Під час пошуку за назвою фільтр жанру вимкнено (обмеження TMDB API).</p>
             )}
-
+            <div className="mt-3">
+                <SortControl field={field} direction={direction} onToggle={toggleSort} />
+            </div>
             <div className={`mt-3 transition-opacity ${c.loading ? 'opacity-50' : ''}`}>
                 {c.error ? (
                     <p className="py-6 text-sm text-ink">Помилка запиту: {c.error}</p>
                 ) : c.loading && c.movies.length === 0 ? (
                     <p className="py-6 text-sm text-muted">Завантаження…</p>
                 ) : (
-                    <MovieList movies={c.movies} genres={genres} ratingAsPercent={ratingAsPercent} />
+                    <MovieList movies={sorted} genres={genres} ratingAsPercent={ratingAsPercent} />
                 )}
             </div>
 
