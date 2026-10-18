@@ -19,6 +19,10 @@ export default function MovieRow({ movie, genreNames, rating }: MovieRowProps) {
                     ))}
                 </div>
             </div>
+            <div className="ml-auto shrink-0 text-right text-xs text-muted tabular-nums sm:block">
+                <div>{movie.release_date || '—'}</div>
+                <div>популярність {Math.round(movie.popularity)}</div>
+            </div>
             <span className="shrink-0 rounded-full bg-gold/10 px-2.5 py-1 text-sm font-semibold text-gold">
         ★ {rating}
       </span>
