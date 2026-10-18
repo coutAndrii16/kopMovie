@@ -1,39 +1,14 @@
-import { useEffect, useState } from 'react'
+import {useState } from 'react'
 import KpiCard from './components/KpiCard'
 import Counter from './components/Counter'
 import Toggle from './components/Toggle'
 import MovieCatalog from './components/MovieCatalog.tsx'
-import { fetchNowPlaying, fetchGenres } from './api/tmdb'
-import type { Movie, Genre, PaginatedResponse } from './types/tmdb.ts'
+import {useDashboardData} from './hooks/useDashboardData.ts'
 
 export default function App() {
-    const [nowPlaying, setNowPlaying] = useState<PaginatedResponse<Movie> | null>(null)
-    const [genres, setGenres] = useState<Genre[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+
+    const {nowPlaying, genres, loading, error} = useDashboardData()
     const [ratingAsPercent, setRatingAsPercent] = useState(false)
-
-    useEffect(() => {
-        let cancelled = false
-
-        Promise.all([fetchNowPlaying(), fetchGenres()])
-            .then(([np, genreList]) => {
-                if (cancelled) return
-                setNowPlaying(np)
-                setGenres(genreList.genres)
-            })
-            .catch((err: Error) => {
-                if (!cancelled) setError(err.message)
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false)
-            })
-
-        return () => {
-            cancelled = true
-        }
-    }, [])
-
     if (loading) {
         return (
             <div className="flex min-h-screen items-center justify-center text-muted">
