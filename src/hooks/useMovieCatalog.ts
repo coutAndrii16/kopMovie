@@ -17,7 +17,7 @@ export function useMovieCatalog() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
-    const debouncedSearch = useDebouncedValue(search.trim(), 400)
+    const debouncedSearch = useDebouncedValue(search.trim(), 800)
 
     const filterKey = `${debouncedSearch}|${genreId ?? ''}`
     const page = pageState.key === filterKey ? pageState.page : 1

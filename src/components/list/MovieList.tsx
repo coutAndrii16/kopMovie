@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import MovieRow from './MovieRow'
-import { formatRating } from '../utils/rating'
-import type { Movie, Genre } from '../types/tmdb'
+import MovieRow from './MovieRow.tsx'
+import { formatRating } from '../../utils/rating.ts'
+import type { Movie, Genre } from '../../types/tmdb.ts'
 
 interface MovieListProps {
     movies: Movie[]
