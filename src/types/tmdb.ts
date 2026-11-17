@@ -28,3 +28,12 @@ export interface PaginatedResponse<T> {
 export interface GenreListResponse {
     genres: Genre[]
 }
+
+// Параметри запиту до каталогу — єдиний вхід для useFetch(fetchCatalog, params).
+export interface CatalogParams {
+    query: string
+    genreId: number | null
+    minRating: number
+    year: number | null
+    page: number
+}
