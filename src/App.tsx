@@ -1,37 +1,22 @@
-import {useState } from 'react'
+import { useState } from 'react'
 import KpiCard from './components/KpiCard'
 import Counter from './components/Counter'
 import Toggle from './components/Toggle'
-import MovieCatalog from './components/MovieCatalog.tsx'
-import {useDashboardData} from './hooks/useDashboardData.ts'
+import MovieCatalog from './components/MovieCatalog'
+import { fetchGenres } from './api/tmdb'
+import { useFetch } from './hooks/useFetch'
+import { useMovieCatalog } from './hooks/useMovieCatalog'
+import { computeKpi } from './utils/kpi'
 
 export default function App() {
-
-    const {nowPlaying, genres, loading, error} = useDashboardData()
+    const genresState = useFetch(fetchGenres, undefined)
+    // Дані каталогу підняті сюди, щоб список і KPI жили від однієї вибірки.
+    const catalog = useMovieCatalog()
     const [ratingAsPercent, setRatingAsPercent] = useState(false)
-    if (loading) {
-        return (
-            <div className="flex min-h-screen items-center justify-center text-muted">
-                Завантаження даних з TMDB…
-            </div>
-        )
-    }
 
-    if (error || !nowPlaying) {
-        return (
-            <div className="flex min-h-screen flex-col items-center justify-center gap-2 text-center">
-                <p className="text-ink">Помилка запиту до TMDB: {error}</p>
-                <p className="text-sm text-muted">Перевірте VITE_TMDB_READ_TOKEN у .env</p>
-            </div>
-        )
-    }
-
-    // KPI рахуються з першої сторінки прокату; total_results — реальна кількість фільмів у прокаті.
-    const sample = nowPlaying.results
-    const topRated = [...sample].sort((a, b) => b.vote_average - a.vote_average)[0]
-    const avgRating = sample.length
-        ? (sample.reduce((sum, m) => sum + m.vote_average, 0) / sample.length).toFixed(1)
-        : '—'
+    const genres = genresState.data?.genres ?? []
+    const kpi = computeKpi(catalog.movies)
+    const pageNote = 'на поточній сторінці'
 
     return (
         <div className="mx-auto max-w-4xl px-6 py-10">
@@ -41,12 +26,24 @@ export default function App() {
             </header>
 
             <section className="flex rounded-xl border border-border bg-surface px-2">
-                <KpiCard label="У прокаті" value={nowPlaying.total_results} change="усього фільмів" />
-                {topRated && (
-                    <KpiCard label="Топ-рейтинг" value={topRated.title} change={`${topRated.vote_average} / 10`} color="gold" />
-                )}
-                <KpiCard label="Середня оцінка" value={avgRating} change="перша сторінка прокату" />
-                <KpiCard label="Жанрів" value={genres.length} change="у довіднику TMDB" color="indigo" />
+                <KpiCard
+                    label="Знайдено"
+                    value={catalog.ready ? catalog.found : '…'}
+                    change={catalog.foundOnPageOnly ? pageNote : 'усього за вибіркою'}
+                />
+                <KpiCard
+                    label="Топ-рейтинг"
+                    value={kpi.topRated?.title ?? '—'}
+                    change={kpi.topRated ? `${kpi.topRated.vote_average.toFixed(1)} / 10` : undefined}
+                    color="gold"
+                />
+                <KpiCard label="Середня оцінка" value={kpi.avgRating?.toFixed(1) ?? '—'} change={pageNote} />
+                <KpiCard
+                    label="Середня популярність"
+                    value={kpi.avgPopularity !== null ? Math.round(kpi.avgPopularity) : '—'}
+                    change={pageNote}
+                    color="indigo"
+                />
             </section>
 
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-[220px_1fr]">
@@ -62,7 +59,7 @@ export default function App() {
                 </aside>
 
                 <div className="rounded-xl border border-border bg-surface p-5">
-                    <MovieCatalog genres={genres} ratingAsPercent={ratingAsPercent} />
+                    <MovieCatalog catalog={catalog} genres={genres} ratingAsPercent={ratingAsPercent} />
                 </div>
             </div>
         </div>
